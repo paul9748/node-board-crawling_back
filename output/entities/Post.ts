@@ -3,6 +3,8 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -11,8 +13,8 @@ import { Comment } from "./Comment";
 import { BoardList } from "./BoardList";
 import { User } from "./User";
 
-@Index("FK_User_TO_Post_1", ["userNo"], {})
 @Index("FK_Board_list_TO_Post_1", ["boardNo"], {})
+@Index("FK_User_TO_Post_1", ["userNo"], {})
 @Entity("Post", { schema: "myBoard" })
 export class Post {
   @PrimaryGeneratedColumn({ type: "int", name: "post_no", comment: "post_no" })
@@ -63,4 +65,13 @@ export class Post {
   })
   @JoinColumn([{ name: "user_no", referencedColumnName: "userNo" }])
   userNo2: User;
+
+  @ManyToMany(() => User, (user) => user.posts2)
+  @JoinTable({
+    name: "Post_like",
+    joinColumns: [{ name: "post_no", referencedColumnName: "postNo" }],
+    inverseJoinColumns: [{ name: "user_no", referencedColumnName: "userNo" }],
+    schema: "myBoard",
+  })
+  users: User[];
 }

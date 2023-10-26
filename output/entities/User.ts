@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   Index,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
@@ -34,4 +35,7 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.userNo2)
   posts: Post[];
+
+  @ManyToMany(() => Post, (post) => post.users)
+  posts2: Post[];
 }
