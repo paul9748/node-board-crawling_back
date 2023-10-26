@@ -20,7 +20,7 @@ export class PostService {
       select: {
         postNo: true,
         postTitle: true,
-        postUser: true,
+        userNo: true,
         postCreationTime: true,
       },
     });
