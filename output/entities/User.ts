@@ -2,12 +2,13 @@ import {
   Column,
   Entity,
   Index,
-  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Comment } from "./Comment";
-import { Post } from "./Post";
+import { PostLike } from "./PostLike";
+import { Posts } from "./Posts";
+import { UserAuth } from "./UserAuth";
 
 @Index("user_no_UNIQUE", ["userNo"], { unique: true })
 @Entity("User", { schema: "myBoard" })
@@ -18,7 +19,7 @@ export class User {
   @Column("varchar", { name: "user_id", comment: "user_id", length: 45 })
   userId: string;
 
-  @Column("varchar", { name: "user_pw", comment: "user_pw", length: 45 })
+  @Column("varchar", { name: "user_pw", comment: "user_pw", length: 100 })
   userPw: string;
 
   @Column("varchar", { name: "user_email", comment: "user_email", length: 45 })
@@ -33,9 +34,12 @@ export class User {
   @OneToMany(() => Comment, (comment) => comment.userNo2)
   comments: Comment[];
 
-  @OneToMany(() => Post, (post) => post.userNo2)
-  posts: Post[];
+  @OneToMany(() => PostLike, (postLike) => postLike.userNo2)
+  postLikes: PostLike[];
 
-  @ManyToMany(() => Post, (post) => post.users)
-  posts2: Post[];
+  @OneToMany(() => Posts, (posts) => posts.userNo2)
+  posts: Posts[];
+
+  @OneToMany(() => UserAuth, (userAuth) => userAuth.userNo2)
+  userAuths: UserAuth[];
 }

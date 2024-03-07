@@ -1,60 +1,50 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Put,
-  Param,
-  Delete,
-  NotFoundException,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { JoinRequestDto, LoginRequestDto, UserDto } from './user.dto';
 import { UserService } from './users.service';
-import { User } from '../entities/User';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { LocalServiceAuthGuard } from 'src/auth/local-service.guard';
+import { AuthService } from '../auth/auth.service';
+import { JwtServiceAuthGuard } from 'src/auth/JwtServiceAuthGuard';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly usersService: UserService) {}
-
-  //get all users
-  @Get()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  constructor(
+    private UsersService: UserService,
+    private authService: AuthService,
+  ) {}
+  @ApiOperation({
+    summary: '사용자 가입 API',
+    description: '사용자가 가입을 한다.',
+  })
+  @Post('join')
+  async Join(@Body() body: JoinRequestDto) {
+    await this.UsersService.Join(body.userId, body.userEmail, body.userPw);
   }
 
-  //get user by userId
-  @Get(':userId')
-  async findOne(@Param('userId') userId: string): Promise<User> {
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException('User does not exist!');
-    } else {
-      return user;
-    }
+  @ApiOperation({
+    summary: '사용자 로그인 API',
+    description: '사용자가 로그인을 한다.',
+  })
+  @UseGuards(LocalServiceAuthGuard)
+  @Post('login')
+  async postLogin(@Body() body: LoginRequestDto, @Req() req) {
+    // validate() 반환값이 req의 프로퍼티로 추가됩니다.
+    const token = this.authService.loginServiceUser(req.user);
+    return token;
   }
-
-  //create user
-  @Post()
-  async create(@Body() user: User): Promise<User> {
-    return this.usersService.create(user);
-  }
-
-  //update user
-  @Put(':userId')
-  async update(
-    @Param('userId') userId: string,
-    @Body() user: User,
-  ): Promise<any> {
-    return this.usersService.update(userId, user);
-  }
-
-  //delete user
-  @Delete(':userId')
-  async delete(@Param('userId') userId: string): Promise<any> {
-    //handle error if user does not exist
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException('User does not exist!');
-    }
-    return this.usersService.delete(userId);
-  }
+@ApiBearerAuth()
+@ApiOperation({
+  summary: '내 정보 조회 API',
+  description: '이름, 메일 등을 조회한다.',
+})
+@UseGuards(JwtServiceAuthGuard)
+@Get('profile')
+async getProfile(@Req() req) {
+  const user = req.user;
+  return {
+    result: true,
+    message: '내 정보를 조회합니다.',
+    data: user,
+  };
+}
 }

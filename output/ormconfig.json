@@ -4,10 +4,9 @@
     "type": "mysql",
     "host": "192.168.1.109",
     "port": 3306,
-    "username": "root",
+    "username": "paul9748",
     "password": "7474014a",
     "database": "",
-    "extra": { "instanceName": "paul9748" },
     "synchronize": false,
     "entities": ["entities/*.js"]
   }

@@ -5,7 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { Post } from "./Post";
+import { Posts } from "./Posts";
 
 @Index("board_no_UNIQUE", ["boardNo"], { unique: true })
 @Entity("Board_list", { schema: "myBoard" })
@@ -19,6 +19,6 @@ export class BoardList {
   @Column("int", { name: "board_permission", default: () => "'0'" })
   boardPermission: number;
 
-  @OneToMany(() => Post, (post) => post.boardNo2)
-  posts: Post[];
+  @OneToMany(() => Posts, (posts) => posts.boardNo2)
+  posts: Posts[];
 }

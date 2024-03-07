@@ -7,11 +7,11 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { User } from "./User";
-import { Post } from "./Post";
+import { Posts } from "./Posts";
 
 @Index("comment_no_UNIQUE", ["commentNo"], { unique: true })
-@Index("FK_Post_TO_Comment_1", ["postNo"], {})
 @Index("FK_User_TO_Comment_1", ["userNo"], {})
+@Index("FK_Post_TO_Comment_1", ["postNo"], {})
 @Entity("Comment", { schema: "myBoard" })
 export class Comment {
   @PrimaryGeneratedColumn({
@@ -48,10 +48,10 @@ export class Comment {
   @JoinColumn([{ name: "user_no", referencedColumnName: "userNo" }])
   userNo2: User;
 
-  @ManyToOne(() => Post, (post) => post.comments, {
+  @ManyToOne(() => Posts, (posts) => posts.comments, {
     onDelete: "NO ACTION",
     onUpdate: "NO ACTION",
   })
   @JoinColumn([{ name: "post_no", referencedColumnName: "postNo" }])
-  postNo2: Post;
+  postNo2: Posts;
 }
