@@ -8,13 +8,14 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Comment } from "./Comment";
+import { PostLike } from "./PostLike";
 import { BoardList } from "./BoardList";
 import { User } from "./User";
 
-@Index("FK_User_TO_Post_1", ["userNo"], {})
 @Index("FK_Board_list_TO_Post_1", ["boardNo"], {})
-@Entity("Post", { schema: "myBoard" })
-export class Post {
+@Index("FK_User_TO_Post_1", ["userNo"], {})
+@Entity("Posts", { schema: "myBoard" })
+export class Posts {
   @PrimaryGeneratedColumn({ type: "int", name: "post_no", comment: "post_no" })
   postNo: number;
 
@@ -47,8 +48,14 @@ export class Post {
   @Column("int", { name: "post_activate", default: () => "'0'" })
   postActivate: number;
 
+  @Column("int", { name: "post_likes", nullable: true, default: () => "'0'" })
+  postLikes: number | null;
+
   @OneToMany(() => Comment, (comment) => comment.postNo2)
   comments: Comment[];
+
+  @OneToMany(() => PostLike, (postLike) => postLike.postNo2)
+  postLikes2: PostLike[];
 
   @ManyToOne(() => BoardList, (boardList) => boardList.posts, {
     onDelete: "NO ACTION",

@@ -1,20 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Post } from '../entities/Post';
+import { Posts } from '../entities/Posts';
+import { PostLike } from "../entities/PostLike"
 import { error } from 'console';
 
 @Injectable()
-export class PostService {
+export class PostsService {
   constructor(
-    @InjectRepository(Post)
-    private postRepository: Repository<Post>,
-  ) {}
-  async findAll(take: number, pageNO: number): Promise<Post[]> {
+    @InjectRepository(Posts)
+    private postsRepository: Repository<Posts>,
+    @InjectRepository(PostLike)
+    private postLikeRepository: Repository<PostLike>
+  ) { }
+  async findAll(take: number, pageNO: number): Promise<Posts[]> {
     if (take > 40) {
       throw error('The request exceeded the maximum number of views.');
     }
-    return this.postRepository.find({
+    return this.postsRepository.find({
       take: take,
       skip: (pageNO - 1) * take,
       select: {
@@ -22,7 +25,47 @@ export class PostService {
         postTitle: true,
         userNo: true,
         postCreationTime: true,
+        postViews: true,
       },
+      where: {
+        postActivate: 0,
+      }
+    });
+  }
+  async creatPost(user_no: number, title: string, board_no: number, content: string) {
+    await this.postsRepository.save({
+      userNo: user_no,
+      postTitle: title,
+      boardNo: board_no,
+      postContent: content,
+
+    })
+  }
+  async likePost(user_no: number, post_no: number,) {
+    let likedPost = this.postLikeRepository.findOne({
+      where: {
+        userNo: user_no,
+        postNo: post_no,
+      }
+    })
+    if (likedPost) {
+      await this.postLikeRepository.delete({
+        userNo: user_no,
+        postNo: post_no,
+      })
+    } else {
+      await this.postLikeRepository.save({
+        userNo: user_no,
+        postNo: post_no,
+      })
+    }
+
+  }
+  async getPostWithLikesCount(post_no: number): Promise<Posts | undefined> {
+    return await this.postsRepository.findOne({
+      where: {
+        postNo: post_no,
+      }
     });
   }
 }
