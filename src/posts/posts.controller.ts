@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, UseGuards, Req, Param } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Posts } from '../entities/Posts';
 import { CreatePostDto } from './posts.dto';
@@ -17,6 +17,11 @@ export class PostsController {
     @Query('pageNO') pageNo: number,
   ): Promise<Posts[]> {
     return this.postService.findAll(take, pageNo);
+  }
+
+  @Get(':postNo')
+  async findOne(@Param('postNo') postNo: number) {
+    return this.postService.findOne(postNo);
   }
 
   @ApiBearerAuth()
@@ -44,3 +49,4 @@ export class PostsController {
 
 
 }
+//todo 게시글 세부 조회시 작성자 이름 제공하도록 수정 

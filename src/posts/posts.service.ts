@@ -26,6 +26,7 @@ export class PostsService {
         userNo: true,
         postCreationTime: true,
         postViews: true,
+        postLikes: true,
       },
       where: {
         postActivate: 0,
@@ -61,11 +62,12 @@ export class PostsService {
     }
 
   }
-  async getPostWithLikesCount(post_no: number): Promise<Posts | undefined> {
+  async findOne(post_no: number): Promise<Posts | undefined> {
     return await this.postsRepository.findOne({
       where: {
         postNo: post_no,
       }
     });
+
   }
 }
