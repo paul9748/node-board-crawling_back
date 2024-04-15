@@ -43,7 +43,7 @@ export class PostsService {
     })
   }
   async likePost(user_no: number, post_no: number,) {
-    let likedPost = this.postLikeRepository.findOne({
+    const likedPost = this.postLikeRepository.findOne({
       where: {
         userNo: user_no,
         postNo: post_no,
