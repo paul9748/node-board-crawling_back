@@ -4,7 +4,6 @@ import { Posts } from '../entities/Posts';
 import { CreatePostDto } from './posts.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtServiceAuthGuard } from 'src/auth/JwtServiceAuthGuard';
-import { query } from 'express';
 
 
 @Controller('posts')
