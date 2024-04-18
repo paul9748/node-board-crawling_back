@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { ruliwebBestCrawler } from 'community_crawler';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class AppService {
@@ -15,10 +16,10 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async performCrawler(): Promise<any> {
+  async performCrawler(date: Date): Promise<any> {
     try {
       // community_crawler를 사용하여 데이터를 가져옴
-      const data = await ruliwebBestCrawler(new Date("2024-04-15T09:11:51.000Z"));
+      const data = await ruliwebBestCrawler(date);
 
       // 가져온 데이터를 CrawledData 엔터티에 저장
       for (const item of data) {
@@ -30,6 +31,7 @@ export class AppService {
         crawledData.views = parseInt(item.views); // 숫자형으로 변환
         crawledData.upvotes = parseInt(item.upvotes); // 숫자형으로 변환
         crawledData.content = item.content;
+        crawledData.contentText = item.data.join(" ");
         crawledData.commentCount = parseInt(item.commentCount); // 숫자형으로 변환
         crawledData.timestamp = new Date(item.timestamp);
         crawledData.processed = 1; // processed 필드에 1 일괄 지정
@@ -47,4 +49,65 @@ export class AppService {
       throw error;
     }
   }
+
+
+
+  async findDataWithKeyword(keyword: string): Promise<any> {
+    const keywordLike = `%${keyword}%`;
+    const query = `
+      WITH KeyValues AS (
+          SELECT 
+              jt.key_columns,
+              JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS val_column
+          FROM 
+              Crawled_Data cd,
+              JSON_TABLE(
+                  JSON_KEYS(cd.processed_data->'$.label_ratios'),
+                  "$[*]" COLUMNS (
+                      key_columns VARCHAR(50) PATH '$'
+                  )
+              ) AS jt
+          WHERE
+              cd.content_text LIKE ?
+      ),
+      TotalSum AS (
+          SELECT 
+              SUM(CAST(val_column AS DECIMAL(10,2))) AS total_sum
+          FROM 
+              KeyValues
+      )
+      SELECT 
+          kv.key_columns,
+          SUM(CAST(kv.val_column AS DECIMAL(10,2))) AS total_val_columns,
+          SUM(CAST(kv.val_column AS DECIMAL(10,2))) / ts.total_sum * 100 AS percent_total,
+          ts.total_sum
+      FROM 
+          KeyValues kv,
+          TotalSum ts
+      GROUP BY
+          kv.key_columns, ts.total_sum
+    `;
+
+    // 매개변수를 배열로 전달
+    return await this.crawledDataRepository.query(query, [keywordLike]);
+  }
+
+  async getlestCrawledData(siteName: string): Promise<Date> {
+    const latestRuliwebColumn = await this.crawledDataRepository
+      .createQueryBuilder("entity")
+      .where("entity.site_name = :siteName", { siteName: siteName })
+      .orderBy("entity.timestamp", "DESC") // 최신 컬럼을 가져오기 위해 생성일 기준으로 내림차순 정렬
+      .getOne();
+
+    return latestRuliwebColumn.timestamp;
+
+  }
+
+  @Cron('*/5 * * * *')
+  async handleCron() {
+    await this.performCrawler(await this.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
+    console.log('루리웹 크롤링');
+  }
+
+
 }

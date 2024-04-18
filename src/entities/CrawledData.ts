@@ -26,6 +26,9 @@ export class CrawledData {
   @Column("text", { name: "content" })
   content: string;
 
+  @Column("text", { name: "content_text", nullable: true })
+  contentText: string | null;
+
   @Column("int", { name: "comment_count" })
   commentCount: number;
 
