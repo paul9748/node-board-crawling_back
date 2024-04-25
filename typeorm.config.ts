@@ -11,6 +11,8 @@ const typeOrmConfig: TypeOrmModuleOptions = {
   entities: [join(__dirname, '..', 'dist/src/entities/*.{ts,js}')],
   migrations: [join(__dirname, '..', 'dist/src/entities/*.{ts,js}')],
   synchronize: true,
+  timezone: 'Z',
+
 };
 
 export default typeOrmConfig;
