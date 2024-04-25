@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { ruliwebBestCrawler } from 'community_crawler';
-import { Cron } from '@nestjs/schedule';
+// import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class AppService {
   constructor(
     @InjectRepository(CrawledData)
     private readonly crawledDataRepository: Repository<CrawledData>,
+
   ) { }
 
   getHello(): string {
@@ -103,11 +104,22 @@ export class AppService {
 
   }
 
-  @Cron('*/5 * * * *')
-  async handleCron() {
+  // @Cron('*/5 * * * *')
+  // async handleCron() {
+  //   await this.performCrawler(await this.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
+  //   console.log('루리웹 크롤링');
+  // }
+  private readonly logger = new Logger(AppService.name);
+
+  async crawlingSchedul() {
+    const randomInterval = Math.floor(Math.random() * 5) + 6; // 1에서 10까지의 랜덤한 숫자 생성
+    // this.logger.log(await this.getlestCrawledData('ruliweb'));
     await this.performCrawler(await this.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
-    console.log('루리웹 크롤링');
+    this.logger.log('루리웹 크롤링');
+    this.logger.log(`Next crawling in ${randomInterval} minutes.`);
+    setTimeout(() => {
+      this.logger.log(`Crawling after ${randomInterval} minutes.`);
+      this.crawlingSchedul(); // 다음 메시지 예약
+    }, randomInterval * 60 * 1000); // 밀리초로 변환
   }
-
-
 }
