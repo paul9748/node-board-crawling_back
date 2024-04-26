@@ -8,7 +8,8 @@ import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule } from '@nestjs/config';
-import { CrawledData } from './entities/CrawledData'; // CrawledData 엔터티 추가
+import { CrawledData } from './entities/CrawledData';
+import { SiteList } from './entities/SiteList';
 
 
 import typeORMConfig from '../typeorm.config';
@@ -22,7 +23,7 @@ console.log(typeORMConfig);
       cache: true,
       isGlobal: true,
     }),
-    TypeOrmModule.forFeature([CrawledData]),
+    TypeOrmModule.forFeature([CrawledData, SiteList]),
     ScheduleModule.forRoot(),
     UserModule,
     PostsModule,
@@ -34,6 +35,5 @@ console.log(typeORMConfig);
 })
 export class AppModule {
   constructor(private readonly consoleService: AppService) {
-    this.consoleService.crawlingSchedul();
   }
 }
