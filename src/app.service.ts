@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
+import { SiteList } from './entities/SiteList';
 import { ruliwebBestCrawler } from 'community_crawler';
 // import { Cron } from '@nestjs/schedule';
 
@@ -10,7 +11,8 @@ export class AppService {
   constructor(
     @InjectRepository(CrawledData)
     private readonly crawledDataRepository: Repository<CrawledData>,
-
+    @InjectRepository(SiteList)
+    private readonly siteListRepository: Repository<SiteList>
   ) { }
 
   getHello(): string {
@@ -100,6 +102,7 @@ export class AppService {
       .orderBy("entity.timestamp", "DESC") // 최신 컬럼을 가져오기 위해 생성일 기준으로 내림차순 정렬
       .getOne();
 
+
     return latestRuliwebColumn.timestamp;
 
   }
@@ -112,6 +115,7 @@ export class AppService {
   private readonly logger = new Logger(AppService.name);
 
   async crawlingSchedul() {
+    if (!this.specialFlag) return {}
     const randomInterval = Math.floor(Math.random() * 5) + 6; // 1에서 10까지의 랜덤한 숫자 생성
     // this.logger.log(await this.getlestCrawledData('ruliweb'));
     await this.performCrawler(await this.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
@@ -121,5 +125,15 @@ export class AppService {
       this.logger.log(`Crawling after ${randomInterval} minutes.`);
       this.crawlingSchedul(); // 다음 메시지 예약
     }, randomInterval * 60 * 1000); // 밀리초로 변환
+  }
+
+  async getTestData() {
+    const ruliwebDataInfo = await this.siteListRepository.findOne({ where: { siteName: 'ruliweb' } })
+    return ruliwebDataInfo;
+  }
+  private specialFlag: boolean = false;
+  setCrowlingFlag() {
+    this.specialFlag = !this.specialFlag;
+    return this.specialFlag
   }
 }
