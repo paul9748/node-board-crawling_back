@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { SiteList } from './entities/SiteList';
-import { ruliwebBestCrawler } from 'community_crawler';
+import { ruliwebBestCrawler, Crawler } from 'community_crawler';
+import { CrawlOptions } from "community_crawler/types"
+
 // import { Cron } from '@nestjs/schedule';
 
 @Injectable()
@@ -23,6 +25,40 @@ export class AppService {
     try {
       // community_crawler를 사용하여 데이터를 가져옴
       const data = await ruliwebBestCrawler(date);
+
+      // 가져온 데이터를 CrawledData 엔터티에 저장
+      for (const item of data) {
+        const crawledData = new CrawledData();
+        crawledData.siteName = 'ruliweb';
+        crawledData.title = item.title;
+        crawledData.link = item.link;
+        crawledData.author = item.author;
+        crawledData.views = parseInt(item.views); // 숫자형으로 변환
+        crawledData.upvotes = parseInt(item.upvotes); // 숫자형으로 변환
+        crawledData.content = item.content;
+        crawledData.contentText = item.data.join(" ");
+        crawledData.commentCount = parseInt(item.commentCount); // 숫자형으로 변환
+        crawledData.timestamp = new Date(item.timestamp);
+        crawledData.processed = 1; // processed 필드에 1 일괄 지정
+        crawledData.processedData = item.data2; // processed_data 필드에 가져온 데이터의 data2 지정
+
+        // 데이터 저장
+        await this.crawledDataRepository.save(crawledData);
+      }
+
+      // 저장된 데이터를 조회하여 반환
+      // const savedData = await this.crawledDataRepository.find();
+      return data;
+    } catch (error) {
+      console.error('Error performing crawler:', error);
+      throw error;
+    }
+  }
+
+  async performCrawler2(options: CrawlOptions): Promise<any> {
+    try {
+      // community_crawler를 사용하여 데이터를 가져옴
+      const data = await Crawler(options);
 
       // 가져온 데이터를 CrawledData 엔터티에 저장
       for (const item of data) {
@@ -95,6 +131,12 @@ export class AppService {
     return await this.crawledDataRepository.query(query, [keywordLike]);
   }
 
+  async findpostbykeyword(keyword: string, page: number, take: number): Promise<any> {
+    return await this.crawledDataRepository.find({
+      where: { contentText: Like(`%${keyword}%`) }, take: take, skip: page,
+    });
+
+  }
   async getlestCrawledData(siteName: string): Promise<Date> {
     const latestRuliwebColumn = await this.crawledDataRepository
       .createQueryBuilder("entity")

@@ -5,14 +5,20 @@ export class SiteList {
   @PrimaryGeneratedColumn({ type: "int", name: "site_no" })
   siteNo: number;
 
-  @Column("char", { name: "site_name", nullable: true, length: 45 })
-  siteName: string | null;
+  @Column("char", { name: "site_name", length: 45 })
+  siteName: string;
 
   @Column("text", { name: "link" })
   link: string;
 
+  @Column("text", { name: "page query param" })
+  pageQueryParam: string;
+
   @Column("text", { name: "title" })
   title: string;
+
+  @Column("text", { name: "post_link" })
+  postLink: string;
 
   @Column("text", { name: "author" })
   author: string;
