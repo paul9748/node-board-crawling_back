@@ -83,6 +83,7 @@ export class AppService {
 
       // 저장된 데이터를 조회하여 반환
       // const savedData = await this.crawledDataRepository.find();
+      //
       return data;
     } catch (error) {
       console.error('Error performing crawler:', error);
