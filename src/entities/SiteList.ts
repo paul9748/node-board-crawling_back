@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity("Site_list", { schema: "myBoard" })
+@Entity("Site_list", { schema: "myboard" })
 export class SiteList {
   @PrimaryGeneratedColumn({ type: "int", name: "site_no" })
   siteNo: number;
@@ -19,6 +19,9 @@ export class SiteList {
 
   @Column("text", { name: "post_link" })
   postLink: string;
+
+  @Column("int", { name: "startpage" })
+  startpage: number;
 
   @Column("text", { name: "author" })
   author: string;
