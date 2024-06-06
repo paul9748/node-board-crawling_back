@@ -10,9 +10,9 @@ import { User } from "./User";
 import { Posts } from "./Posts";
 
 @Index("comment_no_UNIQUE", ["commentNo"], { unique: true })
-@Index("FK_User_TO_Comment_1", ["userNo"], {})
 @Index("FK_Post_TO_Comment_1", ["postNo"], {})
-@Entity("Comment", { schema: "myBoard" })
+@Index("FK_User_TO_Comment_1", ["userNo"], {})
+@Entity("Comment", { schema: "myboard" })
 export class Comment {
   @PrimaryGeneratedColumn({
     type: "int",

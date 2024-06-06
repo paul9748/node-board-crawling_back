@@ -11,7 +11,7 @@ import { Posts } from "./Posts";
 import { UserAuth } from "./UserAuth";
 
 @Index("user_no_UNIQUE", ["userNo"], { unique: true })
-@Entity("User", { schema: "myBoard" })
+@Entity("User", { schema: "myboard" })
 export class User {
   @PrimaryGeneratedColumn({ type: "int", name: "user_no", comment: "user_no" })
   userNo: number;

@@ -17,14 +17,92 @@ export class AppController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '크롤링 테스트',
-    description: '날짜 받아서 이후 게시글 크롤링',
+    description: '날짜 받아서 이후 게시글 크롤링(db)',
   })
   @UseGuards(JwtServiceAuthGuard)
   @Get('test')
-  async crawlRuliweb(@Query('date') date: string): Promise<any> {
-    const result = await this.appService.performCrawler(new Date(date)); // 함수를 호출하는 부분을 변경
-    return result;
+  async crawlRuliweb(@Query('date') dateString: string, @Query('siteName') siteName: string): Promise<any> {
+    const date = new Date(dateString);
+    const data = await this.appService.getSiteData(siteName);
+    if (data == null) {
+      throw new Error("siteData is null");
+    }
+    const options: CrawlOptions = {
+      postListUrl: data.link,
+      pageQueryParam: data.pageQueryParam,
+      selectors: {
+        title: data.title,
+        postLink: data.postLink,
+        startpage: data.startpage,
+        author: data.author,
+        views: data.views,
+        upvotes: data.upvotes,
+        content: data.content,
+        commentCount: data.commentCount,
+        timestamp: data.timestamp,
+      },
+      options: {
+        title: RegExp(data.titleRegexp,'g'),
+        author: RegExp(data.authorRegexp,'g'),
+        views: RegExp(data.viewsRegexp,'g'),
+        upvotes: RegExp(data.upvotesRegexp,'g'),
+        content: RegExp(data.contentRegexp,'g'),
+        commentCount: RegExp(data.commentCountRegexp,'g'),
+        timestamp: RegExp(data.timestampRegexp,'g'),
+      },
+      referenceTime: date,
+
+    };
+    try {
+      const result = await this.appService.performCrawler2(options, siteName); // 함수를 호출하는 부분을 변경
+      return result;
+
+    }
+    catch (e) { return e; }
   }
+
+
+  // @ApiBearerAuth()
+  // @ApiOperation({
+  //   summary: '크롤링 테스트 데이터 확인',
+  //   description: '날짜 받아서 이후 게시글 크롤링(db) 후 바로 출력(저장 x)',
+  // })
+  // @UseGuards(JwtServiceAuthGuard)
+  // @Get('rawTest')
+  // async crawlRawDataTest(@Query('date') dateString: string, @Query('siteName') siteName: string): Promise<any> {
+  //   const date = new Date(dateString);
+  //   const data = await this.appService.getSiteData(siteName);
+  //   if (data == null) {
+  //     throw new Error("siteData is null");
+  //   }
+  //   const options: CrawlOptions = {
+  //     postListUrl: data.link,
+  //     pageQueryParam: data.pageQueryParam,
+  //     selectors: {
+  //       title: data.title,
+  //       postLink: data.postLink,
+  //       startpage: data.startpage,
+  //       author: data.author,
+  //       views: data.views,
+  //       upvotes: data.upvotes,
+  //       content: data.content,
+  //       commentCount: data.commentCount,
+  //       timestamp: data.timestamp,
+  //     },
+  //     options: {
+  //       timestamp: RegExp(data.timestampRegexp),
+  //       views: RegExp(data.viewsRegexp),
+  //     },
+  //     referenceTime: date,
+
+  //   };
+  //   try {
+  //     const result = await this.appService.rawDataTest(options, siteName); // 함수를 호출하는 부분을 변경
+  //     return result;
+
+  //   }
+  //   catch (e) { return e; }
+  // }
 
   @ApiBearerAuth()
   @ApiOperation({
@@ -58,33 +136,45 @@ export class AppController {
   })
   @UseGuards(JwtServiceAuthGuard)
   @Get('test1-3')
-  async crawlRuliwebbydb(): Promise<any> {
+  async crawlRuliwebbydb(@Query('siteName') siteName: string): Promise<any> {
     const date = new Date();
     date.setMinutes(date.getMinutes() - 5);
-    const data = await this.appService.getTestData();
+    const data = await this.appService.getSiteData(siteName);
+    if (data == null) {
+      throw new Error("siteData is null");
+    }
     const options: CrawlOptions = {
       postListUrl: data.link,
       pageQueryParam: data.pageQueryParam,
       selectors: {
         title: data.title,
         postLink: data.postLink,
+        startpage: data.startpage,
         author: data.author,
         views: data.views,
         upvotes: data.upvotes,
-        content: data.commentCount,
+        content: data.content,
         commentCount: data.commentCount,
-        timestamp: data.commentCount,
+        timestamp: data.timestamp,
       },
       options: {
-        timestamp: RegExp(data.timestampRegexp),
+        title: RegExp(data.titleRegexp),
+        author: RegExp(data.authorRegexp),
         views: RegExp(data.viewsRegexp),
+        upvotes: RegExp(data.upvotesRegexp),
+        content: RegExp(data.contentRegexp),
+        commentCount: RegExp(data.commentCountRegexp),
+        timestamp: RegExp(data.timestampRegexp),
       },
       referenceTime: date,
 
     };
+    try {
+      const result = await this.appService.performCrawler2(options, siteName); // 함수를 호출하는 부분을 변경
+      return result;
 
-    const result = await this.appService.performCrawler2(options); // 함수를 호출하는 부분을 변경
-    return result;
+    }
+    catch (e) { return e; }
   }
 
 
@@ -116,8 +206,8 @@ export class AppController {
   })
   @UseGuards(JwtServiceAuthGuard)
   @Get('test3')
-  async getSiteData(): Promise<any> {
-    return await this.appService.getTestData();
+  async getSiteData(@Query('siteName') siteName: string): Promise<any> {
+    return await this.appService.getSiteData(siteName);
   }
   @ApiBearerAuth()
   @ApiOperation({

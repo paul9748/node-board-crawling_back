@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
 import { User } from "./User";
 
-@Entity("User_auth", { schema: "myBoard" })
+@Entity("User_auth", { schema: "myboard" })
 export class UserAuth {
   @Column("int", { primary: true, name: "user_no" })
   userNo: number;

@@ -8,7 +8,7 @@ import {
 import { Posts } from "./Posts";
 
 @Index("board_no_UNIQUE", ["boardNo"], { unique: true })
-@Entity("Board_list", { schema: "myBoard" })
+@Entity("Board_list", { schema: "myboard" })
 export class BoardList {
   @PrimaryGeneratedColumn({ type: "int", name: "board_no" })
   boardNo: number;

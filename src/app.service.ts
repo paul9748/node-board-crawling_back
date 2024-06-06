@@ -4,7 +4,8 @@ import { Like, Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { SiteList } from './entities/SiteList';
 import { ruliwebBestCrawler, Crawler } from 'community_crawler';
-import { CrawlOptions } from "community_crawler/types"
+import { crawlCommunityPosts } from 'community_crawler/crawler';
+import { CrawlOptions } from "community_crawler/types";
 
 // import { Cron } from '@nestjs/schedule';
 
@@ -55,7 +56,7 @@ export class AppService {
     }
   }
 
-  async performCrawler2(options: CrawlOptions): Promise<any> {
+  async performCrawler2(options: CrawlOptions, siteName: string): Promise<any> {
     try {
       // community_crawler를 사용하여 데이터를 가져옴
       const data = await Crawler(options);
@@ -63,7 +64,7 @@ export class AppService {
       // 가져온 데이터를 CrawledData 엔터티에 저장
       for (const item of data) {
         const crawledData = new CrawledData();
-        crawledData.siteName = 'ruliweb';
+        crawledData.siteName = siteName;
         crawledData.title = item.title;
         crawledData.link = item.link;
         crawledData.author = item.author;
@@ -91,15 +92,21 @@ export class AppService {
 
 
 
+  // async rawDataTest(options: CrawlOptions, siteName: string):Promise<any>{
+  //   const data = await crawlCommunityPosts(options);
+  //   return data
+  // }
+
   async findDataWithKeyword(keyword: string): Promise<any> {
     const keywordLike = `%${keyword}%`;
     const query = `
       WITH KeyValues AS (
           SELECT 
               jt.key_columns,
-              JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS val_column
+              CAST(JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS DECIMAL(10,2)) AS val_column
           FROM 
-              Crawled_Data cd,
+              Crawled_Data cd
+          CROSS JOIN
               JSON_TABLE(
                   JSON_KEYS(cd.processed_data->'$.label_ratios'),
                   "$[*]" COLUMNS (
@@ -111,29 +118,31 @@ export class AppService {
       ),
       TotalSum AS (
           SELECT 
-              SUM(CAST(val_column AS DECIMAL(10,2))) AS total_sum
+              SUM(val_column) AS total_sum
           FROM 
               KeyValues
       )
       SELECT 
           kv.key_columns,
-          SUM(CAST(kv.val_column AS DECIMAL(10,2))) AS total_val_columns,
-          SUM(CAST(kv.val_column AS DECIMAL(10,2))) / ts.total_sum * 100 AS percent_total,
+          SUM(kv.val_column) AS total_val_columns,
+          (SUM(kv.val_column) / ts.total_sum) * 100 AS percent_total,
           ts.total_sum
       FROM 
-          KeyValues kv,
+          KeyValues kv
+      CROSS JOIN
           TotalSum ts
       GROUP BY
           kv.key_columns, ts.total_sum
     `;
 
-    // 매개변수를 배열로 전달
+    // 매개변수를 배열로 전달하여 SQL 인젝션 방지
     return await this.crawledDataRepository.query(query, [keywordLike]);
   }
 
+
   async findpostbykeyword(keyword: string, page: number, take: number): Promise<any> {
     return await this.crawledDataRepository.find({
-      where: { contentText: Like(`%${keyword}%`) }, take: take, skip: page,
+      where: { contentText: Like(`%${keyword}%`) }, select: { title: true, link: true, siteName: true, contentText: true, timestamp: true, }, take: take, skip: page,
     });
 
   }
@@ -169,9 +178,9 @@ export class AppService {
     }, randomInterval * 60 * 1000); // 밀리초로 변환
   }
 
-  async getTestData() {
-    const ruliwebDataInfo = await this.siteListRepository.findOne({ where: { siteName: 'ruliweb' } })
-    return ruliwebDataInfo;
+  async getSiteData(siteName: string) {
+    const DataInfo = await this.siteListRepository.findOne({ where: { siteName: siteName } })
+    return DataInfo;
   }
   private specialFlag: boolean = false;
   setCrowlingFlag() {

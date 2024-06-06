@@ -12,9 +12,9 @@ import { PostLike } from "./PostLike";
 import { User } from "./User";
 import { BoardList } from "./BoardList";
 
-@Index("FK_User_TO_Post_1", ["userNo"], {})
 @Index("FK_Board_list_TO_Post_1", ["boardNo"], {})
-@Entity("Posts", { schema: "myBoard" })
+@Index("FK_User_TO_Post_1", ["userNo"], {})
+@Entity("Posts", { schema: "myboard" })
 export class Posts {
   @PrimaryGeneratedColumn({ type: "int", name: "post_no", comment: "post_no" })
   postNo: number;

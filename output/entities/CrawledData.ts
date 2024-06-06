@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity("Crawled_Data", { schema: "myBoard" })
+@Entity("Crawled_Data", { schema: "myboard" })
 export class CrawledData {
   @PrimaryGeneratedColumn({ type: "int", name: "data_no" })
   dataNo: number;

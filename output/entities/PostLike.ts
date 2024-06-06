@@ -3,7 +3,7 @@ import { Posts } from "./Posts";
 import { User } from "./User";
 
 @Index("user_no", ["userNo"], {})
-@Entity("Post_like", { schema: "myBoard" })
+@Entity("Post_like", { schema: "myboard" })
 export class PostLike {
   @Column("int", { primary: true, name: "post_no" })
   postNo: number;
