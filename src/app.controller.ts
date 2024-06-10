@@ -96,7 +96,7 @@ export class AppController {
   async crawlRuliwebbynow(): Promise<any> {
     const date = new Date();
     date.setMinutes(date.getMinutes() - 5);
-    const result = await this.appService.performCrawler(date); // 함수를 호출하는 부분을 변경
+    const result = await this.appService.performCrawler(date);
     return result;
   }
   @ApiBearerAuth()
@@ -110,7 +110,7 @@ export class AppController {
     const date = new Date();
     date.setMinutes(date.getMinutes() - 5);
     try {
-      const result = await this.appService.crawlSite(date.toISOString(), siteName); // 함수를 호출하는 부분을 변경
+      const result = await this.appService.crawlSite(date.toISOString(), siteName);
       return result;
 
     }
