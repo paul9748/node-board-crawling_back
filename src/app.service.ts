@@ -60,7 +60,6 @@ export class AppService {
     try {
       // community_crawler를 사용하여 데이터를 가져옴
       const data = await Crawler(options);
-
       // 가져온 데이터를 CrawledData 엔터티에 저장
       for (const item of data) {
         const crawledData = new CrawledData();
@@ -76,7 +75,6 @@ export class AppService {
         crawledData.timestamp = new Date(item.timestamp);
         crawledData.processed = 1; // processed 필드에 1 일괄 지정
         crawledData.processedData = item.data2; // processed_data 필드에 가져온 데이터의 data2 지정
-
         // 데이터 저장
         await this.crawledDataRepository.save(crawledData);
       }
@@ -170,8 +168,12 @@ export class AppService {
     if (!this.specialFlag) return {}
     const randomInterval = Math.floor(Math.random() * 5) + 6; // 1에서 10까지의 랜덤한 숫자 생성
     // this.logger.log(await this.getlestCrawledData('ruliweb'));
-    await this.performCrawler(await this.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
-    this.logger.log('루리웹 크롤링');
+    const siteNameList = await this.getUseSiteNameList()
+    for (const siteName of siteNameList) {
+      const lastCrawledDate = await this.getlestCrawledData(siteName.siteName);
+      await this.crawlSite(lastCrawledDate.toISOString(), siteName.siteName);
+    }
+    this.logger.log(`사이트 크롤링${siteNameList}`);
     this.logger.log(`Next crawling in ${randomInterval} minutes.`);
     setTimeout(() => {
       this.logger.log(`Crawling after ${randomInterval} minutes.`);
@@ -188,4 +190,51 @@ export class AppService {
     this.specialFlag = !this.specialFlag;
     return this.specialFlag
   }
+
+  async crawlSite(dateString: string, siteName: string) {
+    const date = new Date(dateString);
+    const data = await this.getSiteData(siteName);
+    if (data == null) {
+      throw new Error("siteData is null");
+    }
+    const options: CrawlOptions = {
+      postListUrl: data.link,
+      pageQueryParam: data.pageQueryParam,
+      selectors: {
+        title: data.title,
+        postLink: data.postLink,
+        startpage: data.startpage,
+        author: data.author,
+        views: data.views,
+        upvotes: data.upvotes,
+        content: data.content,
+        commentCount: data.commentCount,
+        timestamp: data.timestamp,
+      },
+      options: {
+        title: RegExp(data.titleRegexp, 'g'),
+        author: RegExp(data.authorRegexp, 'g'),
+        views: RegExp(data.viewsRegexp, 'g'),
+        upvotes: RegExp(data.upvotesRegexp, 'g'),
+        content: RegExp(data.contentRegexp, 'g'),
+        commentCount: RegExp(data.commentCountRegexp, 'g'),
+        timestamp: RegExp(data.timestampRegexp),
+      },
+      referenceTime: date,
+
+    };
+    try {
+      const result = await this.performCrawler2(options, siteName); // 함수를 호출하는 부분을 변경
+      return result;
+
+    }
+    catch (e) { return e; }
+  }
+  async getUseSiteNameList() {
+    //find use == 1 slect siteName
+    return await this.siteListRepository.find({ where: { use: 1 }, select: { siteName: true } });
+  }
+
 }
+
+

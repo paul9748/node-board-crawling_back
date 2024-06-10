@@ -22,44 +22,14 @@ export class AppController {
   @UseGuards(JwtServiceAuthGuard)
   @Get('test')
   async crawlRuliweb(@Query('date') dateString: string, @Query('siteName') siteName: string): Promise<any> {
-    const date = new Date(dateString);
-    const data = await this.appService.getSiteData(siteName);
-    if (data == null) {
-      throw new Error("siteData is null");
-    }
-    const options: CrawlOptions = {
-      postListUrl: data.link,
-      pageQueryParam: data.pageQueryParam,
-      selectors: {
-        title: data.title,
-        postLink: data.postLink,
-        startpage: data.startpage,
-        author: data.author,
-        views: data.views,
-        upvotes: data.upvotes,
-        content: data.content,
-        commentCount: data.commentCount,
-        timestamp: data.timestamp,
-      },
-      options: {
-        title: RegExp(data.titleRegexp,'g'),
-        author: RegExp(data.authorRegexp,'g'),
-        views: RegExp(data.viewsRegexp,'g'),
-        upvotes: RegExp(data.upvotesRegexp,'g'),
-        content: RegExp(data.contentRegexp,'g'),
-        commentCount: RegExp(data.commentCountRegexp,'g'),
-        timestamp: RegExp(data.timestampRegexp,'g'),
-      },
-      referenceTime: date,
-
-    };
     try {
-      const result = await this.appService.performCrawler2(options, siteName); // 함수를 호출하는 부분을 변경
+      const result = await this.appService.crawlSite(dateString, siteName); // 함수를 호출하는 부분을 변경
       return result;
-
     }
     catch (e) { return e; }
   }
+
+
 
 
   // @ApiBearerAuth()
@@ -139,38 +109,8 @@ export class AppController {
   async crawlRuliwebbydb(@Query('siteName') siteName: string): Promise<any> {
     const date = new Date();
     date.setMinutes(date.getMinutes() - 5);
-    const data = await this.appService.getSiteData(siteName);
-    if (data == null) {
-      throw new Error("siteData is null");
-    }
-    const options: CrawlOptions = {
-      postListUrl: data.link,
-      pageQueryParam: data.pageQueryParam,
-      selectors: {
-        title: data.title,
-        postLink: data.postLink,
-        startpage: data.startpage,
-        author: data.author,
-        views: data.views,
-        upvotes: data.upvotes,
-        content: data.content,
-        commentCount: data.commentCount,
-        timestamp: data.timestamp,
-      },
-      options: {
-        title: RegExp(data.titleRegexp),
-        author: RegExp(data.authorRegexp),
-        views: RegExp(data.viewsRegexp),
-        upvotes: RegExp(data.upvotesRegexp),
-        content: RegExp(data.contentRegexp),
-        commentCount: RegExp(data.commentCountRegexp),
-        timestamp: RegExp(data.timestampRegexp),
-      },
-      referenceTime: date,
-
-    };
     try {
-      const result = await this.appService.performCrawler2(options, siteName); // 함수를 호출하는 부분을 변경
+      const result = await this.appService.crawlSite(date.toISOString(), siteName); // 함수를 호출하는 부분을 변경
       return result;
 
     }

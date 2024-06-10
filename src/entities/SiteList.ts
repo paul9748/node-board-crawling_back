@@ -64,4 +64,7 @@ export class SiteList {
 
   @Column("text", { name: "timestamp_regexp" })
   timestampRegexp: string;
+
+  @Column("tinyint", { name: "use", default: () => "'0'" })
+  use: number;
 }
