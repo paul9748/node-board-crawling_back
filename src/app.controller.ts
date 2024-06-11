@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtServiceAuthGuard } from 'src/auth/JwtServiceAuthGuard';
 import { CrawlOptions } from "community_crawler/types"
 import { query } from 'express';
@@ -118,23 +118,64 @@ export class AppController {
   }
 
 
+
   @ApiOperation({
     summary: '분석 조회',
     description: '키워드 기준 분석 정리 조회',
   })
+  @ApiQuery({ name: 'keyword', required: true, type: String })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiQuery({ name: 'siteNames', required: false, type: [String] })
   @Get('test2')
-  async Sentiment_analysis_data_aggregation(@Query('keyword') keyword: string): Promise<any> {
-    const result = { analysis: await this.appService.findDataWithKeyword(keyword), posts: await this.appService.findpostbykeyword(keyword, 0, 10) }; // 함수를 호출하는 부분을 변경
+  async Sentiment_analysis_data_aggregation(
+    @Query('keyword') keyword: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('siteNames') siteNames?: string[],
+  ): Promise<any> {
+
+    // 문자열을 Date 객체로 변환하고 유효성 검사
+    const isValidDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    };
+
+    const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
+    const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
+
+    const result = {
+      analysis: await this.appService.findDataWithKeywordAndFilters(keyword, startTime, endTime, siteNames),
+      posts: await this.appService.findPostByKeyword(keyword, 0, 10, startTime, endTime)
+    };
     return result;
   }
+
 
   @ApiOperation({
     summary: '분석 조회2',
     description: '키워드 기준 게시글 조회',
   })
+  @ApiQuery({ name: 'keyword', required: true, type: String })
+  @ApiQuery({ name: 'page', required: true, type: Number })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiQuery({ name: 'siteNames', required: false, type: [String] })
   @Get('test2-1')
-  async get_page(@Query('keyword') keyword: string, @Query('page') page: number): Promise<any> {
-    const result = { analysis: await this.appService.findDataWithKeyword(keyword), posts: await this.appService.findpostbykeyword(keyword, page, 10) }; // 함수를 호출하는 부분을 변경
+  async get_page(
+    @Query('keyword') keyword: string,
+    @Query('page') page: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('siteNames') siteNames?: string[],): Promise<any> {
+    const isValidDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    };
+    const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
+    const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
+
+    const result = { analysis: await this.appService.findDataWithKeywordAndFilters(keyword), posts: await this.appService.findPostByKeyword(keyword, page, 10, startTime, endTime) }; // 함수를 호출하는 부분을 변경
     return result;
   }
 
@@ -171,7 +212,14 @@ export class AppController {
     this.appService.crawlingSchedul();
     return "Start crawling";
   }
+  @ApiOperation({
+    summary: '대상 사이트 목록 조회',
+    description: '크롤링 대상 사이트 목록 조회',
+  })
+  @Get('test6')
+  async getSiteNameList(): Promise<any> {
 
-
+    return await this.appService.getUseSiteNameList();
+  }
 }
 

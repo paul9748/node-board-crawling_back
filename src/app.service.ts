@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Between, Like, Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { SiteList } from './entities/SiteList';
 import { ruliwebBestCrawler, Crawler } from 'community_crawler';
@@ -96,54 +96,142 @@ export class AppService {
   //   return data
   // }
 
-  async findDataWithKeyword(keyword: string): Promise<any> {
+  // async findDataWithKeyword(keyword: string): Promise<any> {
+  //   const keywordLike = `%${keyword}%`;
+  //   const query = `
+  //     WITH KeyValues AS (
+  //         SELECT
+  //             jt.key_columns,
+  //             CAST(JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS DECIMAL(10,2)) AS val_column
+  //         FROM
+  //             Crawled_Data cd
+  //         CROSS JOIN
+  //             JSON_TABLE(
+  //                 JSON_KEYS(cd.processed_data->'$.label_ratios'),
+  //                 "$[*]" COLUMNS (
+  //                     key_columns VARCHAR(50) PATH '$'
+  //                 )
+  //             ) AS jt
+  //         WHERE
+  //             cd.content_text LIKE ?
+  //     ),
+  //     TotalSum AS (
+  //         SELECT
+  //             SUM(val_column) AS total_sum
+  //         FROM
+  //             KeyValues
+  //     )
+  //     SELECT
+  //         kv.key_columns,
+  //         SUM(kv.val_column) AS total_val_columns,
+  //         (SUM(kv.val_column) / ts.total_sum) * 100 AS percent_total,
+  //         ts.total_sum
+  //     FROM
+  //         KeyValues kv
+  //     CROSS JOIN
+  //         TotalSum ts
+  //     GROUP BY
+  //         kv.key_columns, ts.total_sum
+  //   `;
+
+  //   // 매개변수를 배열로 전달하여 SQL 인젝션 방지
+  //   return await this.crawledDataRepository.query(query, [keywordLike]);
+  // }
+  async findDataWithKeywordAndFilters(
+    keyword: string,
+    startTime?: Date,
+    endTime?: Date,
+    siteNames?: string[]
+  ): Promise<any> {
     const keywordLike = `%${keyword}%`;
-    const query = `
-      WITH KeyValues AS (
-          SELECT 
-              jt.key_columns,
-              CAST(JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS DECIMAL(10,2)) AS val_column
-          FROM 
-              Crawled_Data cd
-          CROSS JOIN
-              JSON_TABLE(
-                  JSON_KEYS(cd.processed_data->'$.label_ratios'),
-                  "$[*]" COLUMNS (
-                      key_columns VARCHAR(50) PATH '$'
-                  )
-              ) AS jt
-          WHERE
-              cd.content_text LIKE ?
-      ),
-      TotalSum AS (
-          SELECT 
-              SUM(val_column) AS total_sum
-          FROM 
-              KeyValues
-      )
-      SELECT 
-          kv.key_columns,
-          SUM(kv.val_column) AS total_val_columns,
-          (SUM(kv.val_column) / ts.total_sum) * 100 AS percent_total,
-          ts.total_sum
-      FROM 
-          KeyValues kv
+
+    let query = `
+  WITH KeyValues AS (
+      SELECT
+          jt.key_columns,
+          CAST(JSON_UNQUOTE(JSON_EXTRACT(cd.processed_data, CONCAT('$.label_ratios."', jt.key_columns, '"'))) AS DECIMAL(10,2)) AS val_column
+      FROM
+          Crawled_Data cd
       CROSS JOIN
-          TotalSum ts
-      GROUP BY
-          kv.key_columns, ts.total_sum
-    `;
+          JSON_TABLE(
+              JSON_KEYS(cd.processed_data->'$.label_ratios'),
+              "$[*]" COLUMNS (
+                  key_columns VARCHAR(50) PATH '$'
+              )
+          ) AS jt
+      WHERE
+          cd.content_text LIKE ?
+  `;
+
+    const params: any[] = [keywordLike];
+
+    if (startTime) {
+      query += ' AND cd.timestamp >= ?';
+      params.push(startTime); // ISO 형식으로 변환
+    }
+
+    if (endTime) {
+      query += ' AND cd.timestamp <= ?';
+      params.push(endTime); // ISO 형식으로 변환
+    }
+
+    if (siteNames && siteNames.length > 0) {
+      const placeholders = siteNames.map(() => '?').join(',');
+      query += ` AND cd.site_name IN (${placeholders})`;
+      params.push(...siteNames);
+    }
+
+    query += `
+  ),
+  TotalSum AS (
+      SELECT
+          SUM(val_column) AS total_sum
+      FROM
+          KeyValues
+  )
+  SELECT
+      kv.key_columns,
+      SUM(kv.val_column) AS total_val_columns,
+      (SUM(kv.val_column) / ts.total_sum) * 100 AS percent_total,
+      ts.total_sum
+  FROM
+      KeyValues kv
+  CROSS JOIN
+      TotalSum ts
+  GROUP BY
+      kv.key_columns, ts.total_sum
+  `;
 
     // 매개변수를 배열로 전달하여 SQL 인젝션 방지
-    return await this.crawledDataRepository.query(query, [keywordLike]);
+    console.log(query, params);
+    return await this.crawledDataRepository.query(query, params);
   }
 
 
-  async findpostbykeyword(keyword: string, page: number, take: number): Promise<any> {
-    return await this.crawledDataRepository.find({
-      where: { contentText: Like(`%${keyword}%`) }, select: { title: true, link: true, siteName: true, contentText: true, timestamp: true, }, take: take, skip: page,
-    });
 
+
+
+  async findPostByKeyword(keyword: string, page: number, take: number, startTime?: Date, endTime?: Date): Promise<any> {
+    const whereCondition: any = {
+      contentText: Like(`%${keyword}%`),
+    };
+
+    if (startTime && endTime) {
+      whereCondition.timestamp = Between(startTime, endTime);
+    }
+
+    return await this.crawledDataRepository.find({
+      where: whereCondition,
+      select: {
+        title: true,
+        link: true,
+        siteName: true,
+        contentText: true,
+        timestamp: true,
+      },
+      take: take,
+      skip: page,
+    });
   }
   async getlestCrawledData(siteName: string): Promise<Date> {
     const latestRuliwebColumn = await this.crawledDataRepository
