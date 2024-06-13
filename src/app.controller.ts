@@ -30,50 +30,6 @@ export class AppController {
   }
 
 
-
-
-  // @ApiBearerAuth()
-  // @ApiOperation({
-  //   summary: '크롤링 테스트 데이터 확인',
-  //   description: '날짜 받아서 이후 게시글 크롤링(db) 후 바로 출력(저장 x)',
-  // })
-  // @UseGuards(JwtServiceAuthGuard)
-  // @Get('rawTest')
-  // async crawlRawDataTest(@Query('date') dateString: string, @Query('siteName') siteName: string): Promise<any> {
-  //   const date = new Date(dateString);
-  //   const data = await this.appService.getSiteData(siteName);
-  //   if (data == null) {
-  //     throw new Error("siteData is null");
-  //   }
-  //   const options: CrawlOptions = {
-  //     postListUrl: data.link,
-  //     pageQueryParam: data.pageQueryParam,
-  //     selectors: {
-  //       title: data.title,
-  //       postLink: data.postLink,
-  //       startpage: data.startpage,
-  //       author: data.author,
-  //       views: data.views,
-  //       upvotes: data.upvotes,
-  //       content: data.content,
-  //       commentCount: data.commentCount,
-  //       timestamp: data.timestamp,
-  //     },
-  //     options: {
-  //       timestamp: RegExp(data.timestampRegexp),
-  //       views: RegExp(data.viewsRegexp),
-  //     },
-  //     referenceTime: date,
-
-  //   };
-  //   try {
-  //     const result = await this.appService.rawDataTest(options, siteName); // 함수를 호출하는 부분을 변경
-  //     return result;
-
-  //   }
-  //   catch (e) { return e; }
-  // }
-
   @ApiBearerAuth()
   @ApiOperation({
     summary: '최근수집 이후 크롤링',
@@ -124,12 +80,14 @@ export class AppController {
     description: '키워드 기준 분석 정리 조회',
   })
   @ApiQuery({ name: 'keyword', required: true, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'startDate', required: false, type: String })
   @ApiQuery({ name: 'endDate', required: false, type: String })
   @ApiQuery({ name: 'siteNames', required: false, type: [String] })
-  @Get('test2')
+  @Get('serchData')
   async Sentiment_analysis_data_aggregation(
     @Query('keyword') keyword: string,
+    @Query('page') page?: number,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('siteNames') siteNames?: string[],
@@ -140,45 +98,19 @@ export class AppController {
       const date = new Date(dateString);
       return !isNaN(date.getTime());
     };
+    if (!page) {
+      page = 0;
+    }
 
     const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
     const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
 
     const result = {
       analysis: await this.appService.findDataWithKeywordAndFilters(keyword, startTime, endTime, siteNames),
-      posts: await this.appService.findPostByKeyword(keyword, 0, 10, startTime, endTime)
+      posts: await this.appService.findPostByKeyword(keyword, page, 10, startTime, endTime)
     };
     return result;
   }
-
-
-  @ApiOperation({
-    summary: '분석 조회2',
-    description: '키워드 기준 게시글 조회',
-  })
-  @ApiQuery({ name: 'keyword', required: true, type: String })
-  @ApiQuery({ name: 'page', required: true, type: Number })
-  @ApiQuery({ name: 'startDate', required: false, type: String })
-  @ApiQuery({ name: 'endDate', required: false, type: String })
-  @ApiQuery({ name: 'siteNames', required: false, type: [String] })
-  @Get('test2-1')
-  async get_page(
-    @Query('keyword') keyword: string,
-    @Query('page') page: number,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('siteNames') siteNames?: string[],): Promise<any> {
-    const isValidDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return !isNaN(date.getTime());
-    };
-    const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
-    const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
-
-    const result = { analysis: await this.appService.findDataWithKeywordAndFilters(keyword), posts: await this.appService.findPostByKeyword(keyword, page, 10, startTime, endTime) }; // 함수를 호출하는 부분을 변경
-    return result;
-  }
-
 
   @ApiBearerAuth()
   @ApiOperation({
@@ -186,7 +118,7 @@ export class AppController {
     description: 'db상의 크롤링 대상 사이트 정보 출력(루리웹)',
   })
   @UseGuards(JwtServiceAuthGuard)
-  @Get('test3')
+  @Get('SiteInfoList')
   async getSiteData(@Query('siteName') siteName: string): Promise<any> {
     return await this.appService.getSiteData(siteName);
   }
@@ -196,7 +128,7 @@ export class AppController {
     description: '크롤링 플래그를 설정한다',
   })
   @UseGuards(JwtServiceAuthGuard)
-  @Get('test4')
+  @Get('setFlag')
   async setCrowlingFlag(): Promise<any> {
     return await this.appService.setCrowlingFlag();
   }
@@ -207,7 +139,7 @@ export class AppController {
     description: '크롤링 함수를 실행한다',
   })
   @UseGuards(JwtServiceAuthGuard)
-  @Get('test5')
+  @Get('startCrawler')
   async startCrawler(): Promise<any> {
     this.appService.crawlingSchedul();
     return "Start crawling";
@@ -216,7 +148,7 @@ export class AppController {
     summary: '대상 사이트 목록 조회',
     description: '크롤링 대상 사이트 목록 조회',
   })
-  @Get('test6')
+  @Get("siteNameList")
   async getSiteNameList(): Promise<any> {
 
     return await this.appService.getUseSiteNameList();

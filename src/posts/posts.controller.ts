@@ -48,4 +48,3 @@ export class PostsController {
 
 
 }
-//todo 게시글 세부 조회시 작성자 이름 제공하도록 수정 

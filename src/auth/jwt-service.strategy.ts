@@ -9,7 +9,7 @@ export class JwtServiceStrategy extends PassportStrategy(
   'jwt-service',
 ) {
   constructor(private readonly configService: ConfigService) {
-    console.log(ExtractJwt.fromAuthHeaderAsBearerToken());
+    // console.log(ExtractJwt.fromAuthHeaderAsBearerToken());
     super({
       secretOrKey: configService.get('SECRET_KEY'),
       ignoreExpiration: false,
@@ -19,7 +19,7 @@ export class JwtServiceStrategy extends PassportStrategy(
 
   // JWT에서 추출한 payload를 검증하고 정보를 반환합니다.
   async validate(payload: any) {
-    console.log(payload);
+    // console.log(payload);
     return {
       id: payload.id,
       email: payload.email,

@@ -11,15 +11,15 @@ export class UserController {
   constructor(
     private UsersService: UserService,
     private authService: AuthService,
-  ) {}
-  @ApiOperation({
-    summary: '사용자 가입 API',
-    description: '사용자가 가입을 한다.',
-  })
-  @Post('join')
-  async Join(@Body() body: JoinRequestDto) {
-    await this.UsersService.Join(body.userId, body.userEmail, body.userPw);
-  }
+  ) { }
+  // @ApiOperation({
+  //   summary: '사용자 가입 API',
+  //   description: '사용자가 가입을 한다.',
+  // })
+  // @Post('join')
+  // async Join(@Body() body: JoinRequestDto) {
+  //   await this.UsersService.Join(body.userId, body.userEmail, body.userPw);
+  // }
 
   @ApiOperation({
     summary: '사용자 로그인 API',
@@ -32,19 +32,19 @@ export class UserController {
     const token = this.authService.loginServiceUser(req.user);
     return token;
   }
-@ApiBearerAuth()
-@ApiOperation({
-  summary: '내 정보 조회 API',
-  description: '이름, 메일 등을 조회한다.',
-})
-@UseGuards(JwtServiceAuthGuard)
-@Get('profile')
-async getProfile(@Req() req) {
-  const user = req.user;
-  return {
-    result: true,
-    message: '내 정보를 조회합니다.',
-    data: user,
-  };
-}
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 정보 조회 API',
+    description: '이름, 메일 등을 조회한다.',
+  })
+  @UseGuards(JwtServiceAuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req) {
+    const user = req.user;
+    return {
+      result: true,
+      message: '내 정보를 조회합니다.',
+      data: user,
+    };
+  }
 }
