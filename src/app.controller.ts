@@ -37,24 +37,25 @@ export class AppController {
   })
   @UseGuards(JwtServiceAuthGuard)
   @Get('test1-1')
-  async crawlRuliwebbydate(): Promise<any> {
-    const result = await this.appService.performCrawler(await this.appService.getlestCrawledData('ruliweb')); // 함수를 호출하는 부분을 변경
+  async crawlRuliwebbydate(@Query('siteName') siteName: string): Promise<any> {
+    const date = await this.appService.getlestCrawledData(siteName);
+    const result = await this.appService.crawlSite(date.toISOString(), siteName); // 함수를 호출하는 부분을 변경
     return result;
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '5분안의 게시글 크롤링',
-    description: '최근~-5분 사이의 게시글 크롤링 (루리웹)',
-  })
-  @UseGuards(JwtServiceAuthGuard)
-  @Get('test1-2')
-  async crawlRuliwebbynow(): Promise<any> {
-    const date = new Date();
-    date.setMinutes(date.getMinutes() - 5);
-    const result = await this.appService.performCrawler(date);
-    return result;
-  }
+  // @ApiBearerAuth()
+  // @ApiOperation({
+  //   summary: '5분안의 게시글 크롤링',
+  //   description: '최근~-5분 사이의 게시글 크롤링 (루리웹)',
+  // })
+  // @UseGuards(JwtServiceAuthGuard)
+  // @Get('test1-2')
+  // async crawlRuliwebbynow(): Promise<any> {
+  //   const date = new Date();
+  //   date.setMinutes(date.getMinutes() - 5);
+  //   const result = await this.appService.performCrawler(date);
+  //   return result;
+  // }
   @ApiBearerAuth()
   @ApiOperation({
     summary: '5분안의 게시글 크롤링(db활용)',
@@ -84,7 +85,7 @@ export class AppController {
   @ApiQuery({ name: 'startDate', required: false, type: String })
   @ApiQuery({ name: 'endDate', required: false, type: String })
   @ApiQuery({ name: 'siteNames', required: false, type: [String] })
-  @Get('serchData')
+  @Get('searchData')
   async Sentiment_analysis_data_aggregation(
     @Query('keyword') keyword: string,
     @Query('page') page?: number,
@@ -104,9 +105,48 @@ export class AppController {
 
     const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
     const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
+    const normalizedSiteNames = siteNames || [];
 
     const result = {
-      analysis: await this.appService.findDataWithKeywordAndFilters(keyword, startTime, endTime, siteNames),
+      analysis: await this.appService.findDataWithKeywordAndFilters(keyword, startTime, endTime, normalizedSiteNames),
+      posts: await this.appService.findPostByKeyword(keyword, page, 10, startTime, endTime)
+    };
+    return result;
+  }
+
+
+  @ApiOperation({
+    summary: '분석 조회',
+    description: '키워드 기준 분석 정리 조회',
+  })
+  @ApiQuery({ name: 'keyword', required: true, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiQuery({ name: 'siteNames', required: false, type: [String] })
+  @Get('searchDataPage')
+  async searchDataPage(
+    @Query('keyword') keyword: string,
+    @Query('page') page?: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('siteNames') siteNames?: string[],
+  ): Promise<any> {
+
+    // 문자열을 Date 객체로 변환하고 유효성 검사
+    const isValidDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    };
+    if (!page) {
+      page = 0;
+    }
+
+    const startTime = startDate && isValidDate(startDate) ? new Date(startDate) : undefined;
+    const endTime = endDate && isValidDate(endDate) ? new Date(endDate) : undefined;
+    const normalizedSiteNames = siteNames || [];
+
+    const result = {
       posts: await this.appService.findPostByKeyword(keyword, page, 10, startTime, endTime)
     };
     return result;

@@ -12,14 +12,14 @@ export class UserController {
     private UsersService: UserService,
     private authService: AuthService,
   ) { }
-  // @ApiOperation({
-  //   summary: '사용자 가입 API',
-  //   description: '사용자가 가입을 한다.',
-  // })
-  // @Post('join')
-  // async Join(@Body() body: JoinRequestDto) {
-  //   await this.UsersService.Join(body.userId, body.userEmail, body.userPw);
-  // }
+  @ApiOperation({
+    summary: '사용자 가입 API',
+    description: '사용자가 가입을 한다.',
+  })
+  @Post('join')
+  async Join(@Body() body: JoinRequestDto) {
+    await this.UsersService.Join(body.userId, body.userEmail, body.userPw);
+  }
 
   @ApiOperation({
     summary: '사용자 로그인 API',

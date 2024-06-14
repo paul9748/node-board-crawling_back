@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Like, Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { SiteList } from './entities/SiteList';
-import { ruliwebBestCrawler, Crawler } from 'community_crawler';
+import { Crawler } from 'community_crawler';
 import { crawlCommunityPosts } from 'community_crawler/crawler';
 import { CrawlOptions } from "community_crawler/types";
 
@@ -22,39 +22,6 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async performCrawler(date: Date): Promise<any> {
-    try {
-      // community_crawler를 사용하여 데이터를 가져옴
-      const data = await ruliwebBestCrawler(date);
-
-      // 가져온 데이터를 CrawledData 엔터티에 저장
-      for (const item of data) {
-        const crawledData = new CrawledData();
-        crawledData.siteName = 'ruliweb';
-        crawledData.title = item.title;
-        crawledData.link = item.link;
-        crawledData.author = item.author;
-        crawledData.views = parseInt(item.views); // 숫자형으로 변환
-        crawledData.upvotes = parseInt(item.upvotes); // 숫자형으로 변환
-        crawledData.content = item.content;
-        crawledData.contentText = item.data.join(" ");
-        crawledData.commentCount = parseInt(item.commentCount); // 숫자형으로 변환
-        crawledData.timestamp = new Date(item.timestamp);
-        crawledData.processed = 1; // processed 필드에 1 일괄 지정
-        crawledData.processedData = item.data2; // processed_data 필드에 가져온 데이터의 data2 지정
-
-        // 데이터 저장
-        await this.crawledDataRepository.save(crawledData);
-      }
-
-      // 저장된 데이터를 조회하여 반환
-      // const savedData = await this.crawledDataRepository.find();
-      return data;
-    } catch (error) {
-      console.error('Error performing crawler:', error);
-      throw error;
-    }
-  }
 
   async performCrawler2(options: CrawlOptions, siteName: string): Promise<any> {
     try {
@@ -141,7 +108,7 @@ export class AppService {
     keyword: string,
     startTime?: Date,
     endTime?: Date,
-    siteNames?: string[]
+    siteNames: string[] = []
   ): Promise<any> {
     const keywordLike = `%${keyword}%`;
 
@@ -175,7 +142,7 @@ export class AppService {
       params.push(endTime); // ISO 형식으로 변환
     }
 
-    if (siteNames && siteNames.length > 0) {
+    if (siteNames.length > 0) {
       const placeholders = siteNames.map(() => '?').join(',');
       query += ` AND cd.site_name IN (${placeholders})`;
       params.push(...siteNames);
@@ -203,9 +170,10 @@ export class AppService {
   `;
 
     // 매개변수를 배열로 전달하여 SQL 인젝션 방지
-    console.log(query, params);
+    // console.log(query, params);
     return await this.crawledDataRepository.query(query, params);
   }
+
 
 
 
@@ -220,6 +188,15 @@ export class AppService {
       whereCondition.timestamp = Between(startTime, endTime);
     }
 
+    const totalCount = await this.crawledDataRepository.count({ where: whereCondition });
+    const maxPage = Math.ceil(totalCount / take) - 1; // 0부터 시작하는 최대 페이지 인덱스
+
+    if (page > maxPage) {
+      return [];
+    }
+
+    const skip = page * take;
+
     return await this.crawledDataRepository.find({
       where: whereCondition,
       select: {
@@ -230,9 +207,11 @@ export class AppService {
         timestamp: true,
       },
       take: take,
-      skip: page,
+      skip: skip,
     });
   }
+
+
   async getlestCrawledData(siteName: string): Promise<Date> {
     const latestRuliwebColumn = await this.crawledDataRepository
       .createQueryBuilder("entity")
