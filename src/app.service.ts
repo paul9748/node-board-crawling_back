@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Like, Repository } from 'typeorm';
 import { CrawledData } from './entities/CrawledData';
 import { SiteList } from './entities/SiteList';
-import { Crawler } from 'community_crawler';
-import { crawlCommunityPosts } from 'community_crawler/crawler';
-import { CrawlOptions } from "community_crawler/types";
+import { Crawler } from '@paul9748/community_crawler';
+// import { crawlCommunityPosts } from '@paul9748/community_crawler/dist/crawler';
+import { CrawlOptions } from "@paul9748/community_crawler";
 
 // import { Cron } from '@nestjs/schedule';
 
@@ -25,7 +25,7 @@ export class AppService {
 
   async performCrawler2(options: CrawlOptions, siteName: string): Promise<any> {
     try {
-      // community_crawler를 사용하여 데이터를 가져옴
+      // @paul9748/community_crawler를 사용하여 데이터를 가져옴
       const data = await Crawler(options);
       // 가져온 데이터를 CrawledData 엔터티에 저장
       for (const item of data) {

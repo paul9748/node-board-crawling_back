@@ -2,8 +2,6 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtServiceAuthGuard } from 'src/auth/JwtServiceAuthGuard';
-import { CrawlOptions } from "community_crawler/types"
-import { query } from 'express';
 
 
 @Controller()
