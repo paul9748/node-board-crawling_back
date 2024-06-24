@@ -33,7 +33,6 @@
     "@paul9748/community_crawler": "^1.0.3",
     "@types/passport-jwt": "^3.0.12",
     "bcrypt": "^5.1.1",
-    "community_crawler": "file:../crawl_test",
     "cron": "^3.1.7",
     "dotenv": "^16.3.1",
     "iconv-lite": "^0.6.3",
