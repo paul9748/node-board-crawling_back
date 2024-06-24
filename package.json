@@ -30,7 +30,7 @@
     "@nestjs/schedule": "^4.0.2",
     "@nestjs/swagger": "^7.1.14",
     "@nestjs/typeorm": "^10.0.0",
-    "@paul9748/community_crawler": "^1.0.3",
+    "@paul9748/community_crawler": "^1.0.4",
     "@types/passport-jwt": "^3.0.12",
     "bcrypt": "^5.1.1",
     "cron": "^3.1.7",
