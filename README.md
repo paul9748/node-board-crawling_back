@@ -16,7 +16,7 @@ I started this project out of my passion for data analysis and community engagem
 
 ## Roadmap
 
-- Add address information for accessing the project's site once it's up and running.
+- Developed an easier way to add sites to the collection
 
 ## Contact
 
