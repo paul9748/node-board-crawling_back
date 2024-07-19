@@ -111,7 +111,9 @@ export class AppService {
     siteNames: string[] = []
   ): Promise<any> {
     const keywordLike = `%${keyword}%`;
-
+    if (typeof siteNames === 'string') {
+      siteNames = [siteNames];
+    }
     let query = `
   WITH KeyValues AS (
       SELECT
@@ -141,13 +143,13 @@ export class AppService {
       query += ' AND cd.timestamp <= ?';
       params.push(endTime); // ISO 형식으로 변환
     }
+    console.log(siteNames);
 
     if (siteNames.length > 0) {
       const placeholders = siteNames.map(() => '?').join(',');
       query += ` AND cd.site_name IN (${placeholders})`;
       params.push(...siteNames);
     }
-
     query += `
   ),
   TotalSum AS (
