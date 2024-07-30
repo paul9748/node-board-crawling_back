@@ -189,7 +189,7 @@ export class AppService {
     if (startTime && endTime) {
       whereCondition.timestamp = Between(startTime, endTime);
     }
-
+    const order: any = { timestamp: 'DESC' };
     const totalCount = await this.crawledDataRepository.count({ where: whereCondition });
     const maxPage = Math.ceil(totalCount / take) - 1; // 0부터 시작하는 최대 페이지 인덱스
 
@@ -208,6 +208,7 @@ export class AppService {
         contentText: true,
         timestamp: true,
       },
+      order: order,
       take: take,
       skip: skip,
     });
